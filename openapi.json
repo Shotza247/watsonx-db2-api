@@ -1,0 +1,475 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "DB2 Credit Applications API",
+    "description": "REST API for managing credit applications in DB2 database. Supports full CRUD operations for credit application management.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "email": "Romeo.Ndlovu@ibm.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "health",
+      "description": "Health and connection checks"
+    },
+    {
+      "name": "read",
+      "description": "Read operations from DB2"
+    },
+    {
+      "name": "write",
+      "description": "Write operations to DB2"
+    },
+    {
+      "name": "update",
+      "description": "Update operations in DB2"
+    },
+    {
+      "name": "delete",
+      "description": "Delete operations from DB2"
+    },
+    {
+      "name": "statistics",
+      "description": "Statistical and analytics endpoints"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Health check",
+        "description": "Check if the API server is running",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "OK"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "service": {
+                      "type": "string",
+                      "example": "DB2 Credit Applications API"
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "1.0.0"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/db2/test": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Test DB2 connection",
+        "description": "Verify that the DB2 database connection is working",
+        "operationId": "testDB2Connection",
+        "responses": {
+          "200": {
+            "description": "DB2 connection successful"
+          },
+          "500": {
+            "description": "DB2 connection failed"
+          }
+        }
+      }
+    },
+    "/api/applications": {
+      "get": {
+        "tags": ["read"],
+        "summary": "Get all credit applications",
+        "description": "Retrieve all credit applications with optional filtering",
+        "operationId": "getAllApplications",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by application status",
+            "schema": {
+              "type": "string",
+              "enum": ["APPROVED", "REJECTED", "IN_REVIEW", "PENDING"]
+            }
+          },
+          {
+            "name": "customer_id",
+            "in": "query",
+            "description": "Filter by customer ID (CIS number)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of records to return",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Applications retrieved successfully"
+          }
+        }
+      }
+    },
+    "/api/application/{app_ref}": {
+      "get": {
+        "tags": ["read"],
+        "summary": "Get application by reference",
+        "description": "Retrieve a single credit application by APP_REF",
+        "operationId": "getApplicationByRef",
+        "parameters": [
+          {
+            "name": "app_ref",
+            "in": "path",
+            "required": true,
+            "description": "Application reference number",
+            "schema": {
+              "type": "string",
+              "example": "APP-2025001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application found"
+          },
+          "404": {
+            "description": "Application not found"
+          }
+        }
+      },
+      "put": {
+        "tags": ["update"],
+        "summary": "Update application",
+        "description": "Update an existing credit application",
+        "operationId": "updateApplication",
+        "parameters": [
+          {
+            "name": "app_ref",
+            "in": "path",
+            "required": true,
+            "description": "Application reference number",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Fields to update"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application updated successfully"
+          },
+          "404": {
+            "description": "Application not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["delete"],
+        "summary": "Delete application",
+        "description": "Delete a credit application from the database",
+        "operationId": "deleteApplication",
+        "parameters": [
+          {
+            "name": "app_ref",
+            "in": "path",
+            "required": true,
+            "description": "Application reference number",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application deleted successfully"
+          },
+          "404": {
+            "description": "Application not found"
+          }
+        }
+      }
+    },
+    "/api/application": {
+      "post": {
+        "tags": ["write"],
+        "summary": "Create new application",
+        "description": "Create a new credit application in the database",
+        "operationId": "createApplication",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["APP_REF", "APP_STATUS", "CIS_CUSTOMER_NUMBER"],
+                "properties": {
+                  "APP_REF": {
+                    "type": "string",
+                    "description": "Application reference number (must be unique)",
+                    "example": "APP-2025999"
+                  },
+                  "APP_STATUS": {
+                    "type": "string",
+                    "enum": ["APPROVED", "REJECTED", "IN_REVIEW", "PENDING"],
+                    "description": "Application status"
+                  },
+                  "CIS_CUSTOMER_NUMBER": {
+                    "type": "string",
+                    "description": "Customer identification number",
+                    "example": "CIS9999"
+                  },
+                  "CUST_FIRST_NAME": {
+                    "type": "string",
+                    "description": "Customer first name"
+                  },
+                  "CUST_LAST_NAME": {
+                    "type": "string",
+                    "description": "Customer last name"
+                  },
+                  "CUST_EMAIL": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Customer email"
+                  },
+                  "REQ_PRODUCT_CODE": {
+                    "type": "string",
+                    "description": "Requested product code"
+                  },
+                  "REQ_PRODUCT_NAME": {
+                    "type": "string",
+                    "description": "Requested product name"
+                  },
+                  "REQ_AMOUNT": {
+                    "type": "number",
+                    "description": "Requested amount"
+                  },
+                  "REQ_CCY": {
+                    "type": "string",
+                    "default": "ZAR",
+                    "description": "Currency code"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Application created successfully"
+          },
+          "400": {
+            "description": "Invalid request or missing required fields"
+          },
+          "409": {
+            "description": "Application reference already exists"
+          }
+        }
+      }
+    },
+    "/api/application/{app_ref}/status": {
+      "patch": {
+        "tags": ["update"],
+        "summary": "Update application status",
+        "description": "Update the status of an existing application",
+        "operationId": "updateApplicationStatus",
+        "parameters": [
+          {
+            "name": "app_ref",
+            "in": "path",
+            "required": true,
+            "description": "Application reference number",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["APPROVED", "REJECTED", "IN_REVIEW", "PENDING"],
+                    "description": "New status for the application"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Reason for rejection (required if status is REJECTED)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated successfully"
+          },
+          "404": {
+            "description": "Application not found"
+          }
+        }
+      }
+    },
+    "/api/customer/{cis_number}/applications": {
+      "get": {
+        "tags": ["read"],
+        "summary": "Get customer applications",
+        "description": "Retrieve all applications for a specific customer",
+        "operationId": "getCustomerApplications",
+        "parameters": [
+          {
+            "name": "cis_number",
+            "in": "path",
+            "required": true,
+            "description": "Customer identification number (CIS number)",
+            "schema": {
+              "type": "string",
+              "example": "CIS1003"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer applications retrieved"
+          }
+        }
+      }
+    },
+    "/api/customer/{cis_number}/summary": {
+      "get": {
+        "tags": ["read"],
+        "summary": "Get customer summary",
+        "description": "Retrieve statistical summary for a customer",
+        "operationId": "getCustomerSummary",
+        "parameters": [
+          {
+            "name": "cis_number",
+            "in": "path",
+            "required": true,
+            "description": "Customer identification number",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer summary retrieved"
+          },
+          "404": {
+            "description": "Customer not found"
+          }
+        }
+      }
+    },
+    "/api/search": {
+      "get": {
+        "tags": ["read"],
+        "summary": "Search applications",
+        "description": "Search applications by customer name, email, CIS number, or APP_REF",
+        "operationId": "searchApplications",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "description": "Search query (minimum 2 characters)",
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results"
+          },
+          "400": {
+            "description": "Invalid search query"
+          }
+        }
+      }
+    },
+    "/api/stats/overview": {
+      "get": {
+        "tags": ["statistics"],
+        "summary": "Get overall statistics",
+        "description": "Retrieve overall application statistics",
+        "operationId": "getOverviewStats",
+        "responses": {
+          "200": {
+            "description": "Statistics retrieved"
+          }
+        }
+      }
+    },
+    "/api/stats/by-status": {
+      "get": {
+        "tags": ["statistics"],
+        "summary": "Get statistics by status",
+        "description": "Retrieve application statistics grouped by status",
+        "operationId": "getStatsByStatus",
+        "responses": {
+          "200": {
+            "description": "Statistics retrieved"
+          }
+        }
+      }
+    },
+    "/api/stats/by-product": {
+      "get": {
+        "tags": ["statistics"],
+        "summary": "Get statistics by product",
+        "description": "Retrieve application statistics grouped by product type",
+        "operationId": "getStatsByProduct",
+        "responses": {
+          "200": {
+            "description": "Statistics retrieved"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenAPI JSON Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .file-upload {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload:hover {
+            background: #e7f3ff;
+            border-color: #764ba2;
+        }
+
+        .file-upload.dragover {
+            background: #e7f3ff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .validation-result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .validation-result.success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .validation-result.error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .validation-result.info {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+
+        .spec-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-card h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-card p {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .endpoints-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .endpoint-item {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .endpoint-item:last-child {
+            border-bottom: none;
+        }
+
+        .method-badge {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .method-get {
+            background: #61affe;
+            color: white;
+        }
+
+        .method-post {
+            background: #49cc90;
+            color: white;
+        }
+
+        .method-put {
+            background: #fca130;
+            color: white;
+        }
+
+        .method-patch {
+            background: #50e3c2;
+            color: white;
+        }
+
+        .method-delete {
+            background: #f93e3e;
+            color: white;
+        }
+
+        .endpoint-path {
+            flex: 1;
+            font-family: monospace;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .endpoint-desc {
+            flex: 2;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .test-btn {
+            padding: 6px 15px;
+            font-size: 13px;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .schema-viewer {
+            margin-top: 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 OpenAPI JSON Tester</h1>
+            <p>Upload and validate your openapi.json file</p>
+        </div>
+
+        <div class="content">
+            <!-- File Upload Section -->
+            <div class="section">
+                <h2>📁 Upload OpenAPI File</h2>
+                <div class="file-upload" id="dropZone">
+                    <p style="font-size: 48px; margin-bottom: 10px;">📄</p>
+                    <p style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">
+                        Drop your openapi.json file here
+                    </p>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        or click to browse
+                    </p>
+                    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                        Choose File
+                    </button>
+                    <input type="file" id="fileInput" accept=".json,application/json">
+                </div>
+            </div>
+
+            <!-- Validation Results -->
+            <div class="section" id="resultsSection" style="display: none;">
+                <h2>✅ Validation Results</h2>
+                <div id="validationResults"></div>
+            </div>
+
+            <!-- API Information -->
+            <div class="section" id="infoSection" style="display: none;">
+                <h2>ℹ️ API Information</h2>
+                <div class="spec-info" id="apiInfo"></div>
+            </div>
+
+            <!-- Endpoints -->
+            <div class="section" id="endpointsSection" style="display: none;">
+                <h2>🔗 Available Endpoints</h2>
+                <div id="endpointsList" class="endpoints-list"></div>
+            </div>
+
+            <!-- Schema Details -->
+            <div class="section" id="schemaSection" style="display: none;">
+                <h2>📋 API Schema Details</h2>
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="showTab('formatted')">Formatted View</button>
+                    <button class="tab-btn" onclick="showTab('raw')">Raw JSON</button>
+                </div>
+                <div id="formattedView" class="tab-content active"></div>
+                <div id="rawView" class="tab-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let openApiSpec = null;
+
+        // File upload handling
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.name.endsWith('.json')) {
+                showValidationResult('error', 'Please upload a JSON file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    openApiSpec = JSON.parse(e.target.result);
+                    validateAndDisplay(openApiSpec);
+                } catch (error) {
+                    showValidationResult('error', `Invalid JSON: ${error.message}`);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function validateAndDisplay(spec) {
+            // Basic validation
+            const errors = [];
+            const warnings = [];
+
+            // Check required OpenAPI fields
+            if (!spec.openapi) {
+                errors.push('Missing required field: openapi');
+            }
+            if (!spec.info) {
+                errors.push('Missing required field: info');
+            }
+            if (!spec.paths) {
+                errors.push('Missing required field: paths');
+            }
+
+            // Check OpenAPI version
+            if (spec.openapi && !spec.openapi.startsWith('3.0')) {
+                warnings.push(`OpenAPI version ${spec.openapi} detected. This tester is optimized for 3.0.x`);
+            }
+
+            // Check if paths is empty
+            if (spec.paths && Object.keys(spec.paths).length === 0) {
+                warnings.push('No paths defined in the specification');
+            }
+
+            // Display results
+            if (errors.length > 0) {
+                showValidationResult('error', `Validation failed:\n${errors.join('\n')}`);
+                return;
+            }
+
+            let message = '✅ OpenAPI specification is valid!';
+            if (warnings.length > 0) {
+                message += '\n\n⚠️ Warnings:\n' + warnings.join('\n');
+            }
+
+            showValidationResult('success', message);
+            displayApiInfo(spec);
+            displayEndpoints(spec);
+            displaySchema(spec);
+        }
+
+        function showValidationResult(type, message) {
+            const resultsSection = document.getElementById('resultsSection');
+            const validationResults = document.getElementById('validationResults');
+
+            resultsSection.style.display = 'block';
+            validationResults.innerHTML = `
+                <div class="validation-result ${type}">
+                    <strong>${type === 'success' ? '✅ Success' : type === 'error' ? '❌ Error' : 'ℹ️ Info'}:</strong>
+                    <pre style="background: transparent; color: inherit; padding: 10px 0; margin-top: 10px;">${message}</pre>
+                </div>
+            `;
+        }
+
+        function displayApiInfo(spec) {
+            const infoSection = document.getElementById('infoSection');
+            const apiInfo = document.getElementById('apiInfo');
+
+            const pathCount = spec.paths ? Object.keys(spec.paths).length : 0;
+            const endpointCount = countEndpoints(spec.paths);
+            const serverUrl = spec.servers && spec.servers[0] ? spec.servers[0].url : 'Not specified';
+
+            apiInfo.innerHTML = `
+                <div class="info-card">
+                    <h3>API Title</h3>
+                    <p>${spec.info.title || 'N/A'}</p>
+                </div>
+                <div class="info-card">
+                    <h3>Version</h3>
+                    <p>${spec.info.version || 'N/A'}</p>
+                </div>
+                <div class="info-card">
+                    <h3>OpenAPI Version</h3>
+                    <p>${spec.openapi || 'N/A'}</p>
+                </div>
+                <div class="info-card">
+                    <h3>Total Paths</h3>
+                    <p>${pathCount}</p>
+                </div>
+                <div class="info-card">
+                    <h3>Total Endpoints</h3>
+                    <p>${endpointCount}</p>
+                </div>
+                <div class="info-card">
+                    <h3>Server URL</h3>
+                    <p style="font-size: 14px; word-break: break-all;">${serverUrl}</p>
+                </div>
+            `;
+
+            infoSection.style.display = 'block';
+        }
+
+        function countEndpoints(paths) {
+            if (!paths) return 0;
+            let count = 0;
+            Object.values(paths).forEach(path => {
+                Object.keys(path).forEach(method => {
+                    if (['get', 'post', 'put', 'patch', 'delete', 'options', 'head'].includes(method)) {
+                        count++;
+                    }
+                });
+            });
+            return count;
+        }
+
+        function displayEndpoints(spec) {
+            const endpointsSection = document.getElementById('endpointsSection');
+            const endpointsList = document.getElementById('endpointsList');
+
+            if (!spec.paths) {
+                endpointsSection.style.display = 'none';
+                return;
+            }
+
+            let html = '';
+            Object.entries(spec.paths).forEach(([path, methods]) => {
+                Object.entries(methods).forEach(([method, details]) => {
+                    if (['get', 'post', 'put', 'patch', 'delete'].includes(method)) {
+                        const summary = details.summary || details.description || 'No description';
+                        html += `
+                            <div class="endpoint-item">
+                                <span class="method-badge method-${method}">${method.toUpperCase()}</span>
+                                <span class="endpoint-path">${path}</span>
+                                <span class="endpoint-desc">${summary}</span>
+                                <button class="btn btn-primary test-btn" onclick="testEndpoint('${method}', '${path}')">
+                                    Test
+                                </button>
+                            </div>
+                        `;
+                    }
+                });
+            });
+
+            endpointsList.innerHTML = html;
+            endpointsSection.style.display = 'block';
+        }
+
+        function displaySchema(spec) {
+            const schemaSection = document.getElementById('schemaSection');
+            const formattedView = document.getElementById('formattedView');
+            const rawView = document.getElementById('rawView');
+
+            // Formatted view
+            let formatted = '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">';
+            
+            // Info section
+            formatted += `<h3 style="color: #667eea; margin-bottom: 15px;">📋 API Information</h3>`;
+            formatted += `<p><strong>Title:</strong> ${spec.info.title}</p>`;
+            formatted += `<p><strong>Description:</strong> ${spec.info.description || 'N/A'}</p>`;
+            formatted += `<p><strong>Version:</strong> ${spec.info.version}</p>`;
+            
+            // Servers
+            if (spec.servers && spec.servers.length > 0) {
+                formatted += `<h3 style="color: #667eea; margin: 20px 0 15px;">🖥️ Servers</h3>`;
+                spec.servers.forEach(server => {
+                    formatted += `<p><strong>URL:</strong> ${server.url}</p>`;
+                    if (server.description) {
+                        formatted += `<p><strong>Description:</strong> ${server.description}</p>`;
+                    }
+                });
+            }
+
+            // Tags
+            if (spec.tags && spec.tags.length > 0) {
+                formatted += `<h3 style="color: #667eea; margin: 20px 0 15px;">🏷️ Tags</h3>`;
+                spec.tags.forEach(tag => {
+                    formatted += `<p><strong>${tag.name}:</strong> ${tag.description || 'N/A'}</p>`;
+                });
+            }
+
+            formatted += '</div>';
+            formattedView.innerHTML = formatted;
+
+            // Raw view
+            rawView.innerHTML = `<pre>${JSON.stringify(spec, null, 2)}</pre>`;
+
+            schemaSection.style.display = 'block';
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + 'View').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function testEndpoint(method, path) {
+            if (!openApiSpec.servers || openApiSpec.servers.length === 0) {
+                alert('No server URL defined in the specification');
+                return;
+            }
+
+            const serverUrl = openApiSpec.servers[0].url;
+            const fullUrl = serverUrl + path;
+
+            alert(`Testing endpoint:\n\nMethod: ${method.toUpperCase()}\nURL: ${fullUrl}\n\nThis will open your browser interface to test this endpoint.`);
+            
+            // Open the main API testing interface
+            window.open('index.html', '_blank');
+        }
+    </script>
+</body>
+</html>

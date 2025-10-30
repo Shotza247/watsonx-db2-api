@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DB2 Credit Applications API - Browser Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .tab:hover {
+            background: #e0e0e0;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+            font-family: monospace;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .response {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 6px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+        }
+
+        .response pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .success {
+            border-left-color: #28a745;
+        }
+
+        .error {
+            border-left-color: #dc3545;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-online {
+            background: #28a745;
+        }
+
+        .status-offline {
+            background: #dc3545;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗄️ DB2 Credit Applications API</h1>
+            <p>Browser Interface for Testing</p>
+            <p><span class="status-indicator status-offline" id="statusIndicator"></span> <span id="statusText">Connecting...</span></p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('read')">📖 Read Data</button>
+            <button class="tab" onclick="showTab('write')">✍️ Write Data</button>
+            <button class="tab" onclick="showTab('update')">🔄 Update Data</button>
+            <button class="tab" onclick="showTab('delete')">🗑️ Delete Data</button>
+            <button class="tab" onclick="showTab('stats')">📊 Statistics</button>
+        </div>
+
+        <div class="content">
+            <!-- READ SECTION -->
+            <div id="read" class="section active">
+                <h2>📖 Read from DB2</h2>
+                
+                <div class="quick-actions">
+                    <button class="btn btn-primary" onclick="getAllApplications()">Get All Applications</button>
+                    <button class="btn btn-primary" onclick="getApprovedApps()">Get Approved Only</button>
+                    <button class="btn btn-primary" onclick="getDbInfo()">Database Info</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Get Application by APP_REF:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="readAppRef" placeholder="e.g., APP-2025001">
+                        <button class="btn btn-primary" onclick="getByAppRef()">Get</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Get Applications by Customer Number:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="readCustomer" placeholder="e.g., CIS1003">
+                        <button class="btn btn-primary" onclick="getByCustomer()">Get</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Search Applications:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="searchQuery" placeholder="Search by name, email, or reference">
+                        <button class="btn btn-primary" onclick="searchApplications()">Search</button>
+                    </div>
+                </div>
+
+                <div id="readResponse"></div>
+            </div>
+
+            <!-- WRITE SECTION -->
+            <div id="write" class="section">
+                <h2>✍️ Write to DB2 (Create Application)</h2>
+                
+                <div class="info-box">
+                    <strong>ℹ️ Quick Start:</strong> Fill in the required fields below and click "Create Application"
+                </div>
+
+                <div class="grid">
+                    <div class="form-group">
+                        <label>APP_REF: <span style="color: red;">*</span></label>
+                        <input type="text" id="appRef" placeholder="APP-2025999" value="APP-2025999">
+                    </div>
+
+                    <div class="form-group">
+                        <label>APP_STATUS: <span style="color: red;">*</span></label>
+                        <select id="appStatus">
+                            <option value="PENDING">PENDING</option>
+                            <option value="IN_REVIEW">IN_REVIEW</option>
+                            <option value="APPROVED">APPROVED</option>
+                            <option value="REJECTED">REJECTED</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>CIS_CUSTOMER_NUMBER: <span style="color: red;">*</span></label>
+                        <input type="text" id="cisNumber" placeholder="CIS9999" value="CIS9999">
+                    </div>
+
+                    <div class="form-group">
+                        <label>First Name:</label>
+                        <input type="text" id="firstName" placeholder="John" value="John">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Last Name:</label>
+                        <input type="text" id="lastName" placeholder="Doe" value="Doe">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="email" placeholder="john.doe@example.com" value="john.doe@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Product Code:</label>
+                        <select id="productCode">
+                            <option value="">Select...</option>
+                            <option value="TL01">TL01 - Term Loan</option>
+                            <option value="OD01">OD01 - Overdraft</option>
+                            <option value="RC01">RC01 - Revolving Credit</option>
+                            <option value="AF01">AF01 - Asset Finance</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Product Name:</label>
+                        <input type="text" id="productName" placeholder="Term Loan" value="Term Loan">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Amount (ZAR):</label>
+                        <input type="number" id="amount" placeholder="100000" value="100000">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Currency:</label>
+                        <input type="text" id="currency" placeholder="ZAR" value="ZAR" readonly>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="createApplication()">Create Application</button>
+                <button class="btn btn-secondary" onclick="fillSampleData()">Fill Sample Data</button>
+
+                <div id="writeResponse"></div>
+            </div>
+
+            <!-- UPDATE SECTION -->
+            <div id="update" class="section">
+                <h2>🔄 Update Application</h2>
+
+                <div class="form-group">
+                    <label>APP_REF to Update:</label>
+                    <input type="text" id="updateAppRef" placeholder="APP-2025999">
+                </div>
+
+                <div class="form-group">
+                    <label>New Status:</label>
+                    <select id="updateStatus">
+                        <option value="PENDING">PENDING</option>
+                        <option value="IN_REVIEW">IN_REVIEW</option>
+                        <option value="APPROVED">APPROVED</option>
+                        <option value="REJECTED">REJECTED</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Rejection Reason (if REJECTED):</label>
+                    <input type="text" id="rejectionReason" placeholder="Income below threshold">
+                </div>
+
+                <button class="btn btn-primary" onclick="updateStatus()">Update Status</button>
+
+                <div id="updateResponse"></div>
+            </div>
+
+            <!-- DELETE SECTION -->
+            <div id="delete" class="section">
+                <h2>🗑️ Delete Application</h2>
+
+                <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107;">
+                    <strong>⚠️ Warning:</strong> This action cannot be undone!
+                </div>
+
+                <div class="form-group">
+                    <label>APP_REF to Delete:</label>
+                    <input type="text" id="deleteAppRef" placeholder="APP-2025999">
+                </div>
+
+                <button class="btn btn-danger" onclick="deleteApplication()">Delete Application</button>
+
+                <div id="deleteResponse"></div>
+            </div>
+
+            <!-- STATS SECTION -->
+            <div id="stats" class="section">
+                <h2>📊 Statistics & Analytics</h2>
+
+                <div class="quick-actions">
+                    <button class="btn btn-primary" onclick="getOverviewStats()">Overview Stats</button>
+                    <button class="btn btn-primary" onclick="getStatusStats()">Stats by Status</button>
+                    <button class="btn btn-primary" onclick="getProductStats()">Stats by Product</button>
+                </div>
+
+                <div id="statsResponse"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:4000';
+
+        // Check server status on load
+        window.onload = function() {
+            checkServerStatus();
+        };
+
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                
+                if (data.status === 'OK') {
+                    document.getElementById('statusIndicator').className = 'status-indicator status-online';
+                    document.getElementById('statusText').textContent = 'Connected';
+                } else {
+                    throw new Error('Server not OK');
+                }
+            } catch (error) {
+                document.getElementById('statusIndicator').className = 'status-indicator status-offline';
+                document.getElementById('statusText').textContent = 'Disconnected - Make sure server is running on port 4000';
+            }
+        }
+
+        function showTab(tabName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(tabName).classList.add('active');
+            
+            // Set active tab
+            event.target.classList.add('active');
+        }
+
+        function showResponse(elementId, data, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            const className = isSuccess ? 'success' : 'error';
+            element.innerHTML = `
+                <div class="response ${className}">
+                    <strong>${isSuccess ? '✅ Success' : '❌ Error'}:</strong>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        function showLoading(elementId) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = '<div class="loading"></div> Loading...';
+        }
+
+        // READ FUNCTIONS
+        async function getAllApplications() {
+            showLoading('readResponse');
+            try {
+                const response = await fetch(`${API_URL}/api/applications`);
+                const data = await response.json();
+                showResponse('readResponse', data, data.success);
+            } catch (error) {
+                showResponse('readResponse', { error: error.message }, false);
+            }
+        }
+
+        async function getApprovedApps() {
+            showLoading('readResponse');
+            try {
+                const response = await fetch(`${API_URL}/api/applications?status=APPROVED`);
+                const data = await response.json();
+                showResponse('readResponse', data, data.success);
+            } catch (error) {
+                showResponse('readResponse', { error: error.message }, false);
+            }
+        }
+
+        async function getDbInfo() {
+            showLoading('readResponse');
+            try {
+                const response = await fetch(`${API_URL}/api/db2/info`);
+                const data = await response.json();
+                showResponse('readResponse', data, data.success);
+            } catch (error) {
+                showResponse('readResponse', { error: error.message }, false);
+            }
+        }
+
+        async function getByAppRef() {
+            const appRef = document.getElementById('readAppRef').value;
+            if (!appRef) {
+                alert('Please enter an APP_REF');
+                return;
+            }
+            
+            showLoading('readResponse');
+            try {
+                const response = await fetch(`${API_URL}/api/application/${appRef}`);
+                const data = await response.json();
+                showResponse('readResponse', data, data.success);
+            } catch (error) {
+                showResponse('readResponse', { error: error.message }, false);
+            }
+        }
+
+        async function getByCustomer() {
+            const customer = document.getElementById('readCustomer').value;
+            if (!customer) {
+                alert('Please enter a Customer Number');
+                return;
+            }
+            
+            showLoading('readResponse');
+            try {
+                const response = await fetch(`${API_URL}/api/customer/${customer}/applications`);
+                const data = await response.json();
+                showResponse('readResponse', data, data.success);
+            } catch (error) {
+                showResponse('readResponse', { error: error.message }, false);
+            }
+        }
+
+        async function searchApplications() {
+            const query = document.getElementById('searchQuery').value;
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+            
+            showLoading('readResponse');
+            try {
+                const response = await fetch(`${API_URL}/api/search?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                showResponse('readResponse', data, data.success);
+            } catch (error) {
+                showResponse('readResponse', { error: error.message }, false);
+            }
+        }
+
+        // WRITE FUNCTION
+        async function createApplication() {
+            const appData = {
+                APP_REF: document.getElementById('appRef').value,
+                APP_STATUS: document.getElementById('appStatus').value,
+                CIS_CUSTOMER_NUMBER: document.getElementById('cisNumber').value,
+                CUST_FIRST_NAME: document.getElementById('firstName').value,
+                CUST_LAST_NAME: document.getElementById('lastName').value,
+                CUST_EMAIL: document.getElementById('email').value,
+                REQ_PRODUCT_CODE: document.getElementById('productCode').value,
+                REQ_PRODUCT_NAME: document.getElementById('productName').value,
+                REQ_AMOUNT: parseFloat(document.getElementById('amount').value),
+                REQ_CCY: document.getElementById('currency').value
+            };
+
+            if (!appData.APP_REF || !appData.APP_STATUS || !appData.CIS_CUSTOMER_NUMBER) {
+                alert('Please fill in all required fields (marked with *)');
+                return;
+            }
+
+            showLoading('writeResponse');
+            try {
+                const response = await fetch(`${API_URL}/api/application`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(appData)
+                });
+                const data = await response.json();
+                showResponse('writeResponse', data, data.success);
+            } catch (error) {
+                showResponse('writeResponse', { error: error.message }, false);
+            }
+        }
+
+        function fillSampleData() {
+            const randomNum = Math.floor(Math.random() * 10000);
+            document.getElementById('appRef').value = `APP-TEST${randomNum}`;
+            document.getElementById('cisNumber').value = `CISTEST${randomNum}`;
+            document.getElementById('firstName').value = 'Sample';
+            document.getElementById('lastName').value = 'User';
+            document.getElementById('email').value = `sample${randomNum}@example.com`;
+            document.getElementById('productCode').value = 'TL01';
+            document.getElementById('productName').value = 'Term Loan';
+            document.getElementById('amount').value = Math.floor(Math.random() * 500000) + 50000;
+        }
+
+        // UPDATE FUNCTION
+        async function updateStatus() {
+            const appRef = document.getElementById('updateAppRef').value;
+            const status = document.getElementById('updateStatus').value;
+            const reason = document.getElementById('rejectionReason').value;
+
+            if (!appRef) {
+                alert('Please enter an APP_REF');
+                return;
+            }
+
+            const updateData = { status };
+            if (status === 'REJECTED' && reason) {
+                updateData.reason = reason;
+            }
+
+            showLoading('updateResponse');
+            try {
+                const response = await fetch(`${API_URL}/api/application/${appRef}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                const data = await response.json();
+                showResponse('updateResponse', data, data.success);
+            } catch (error) {
+                showResponse('updateResponse', { error: error.message }, false);
+            }
+        }
+
+        // DELETE FUNCTION
+        async function deleteApplication() {
+            const appRef = document.getElementById('deleteAppRef').value;
+
+            if (!appRef) {
+                alert('Please enter an APP_REF');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete ${appRef}? This cannot be undone!`)) {
+                return;
+            }
+
+            showLoading('deleteResponse');
+            try {
+                const response = await fetch(`${API_URL}/api/application/${appRef}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                showResponse('deleteResponse', data, data.success);
+            } catch (error) {
+                showResponse('deleteResponse', { error: error.message }, false);
+            }
+        }
+
+        // STATS FUNCTIONS
+        async function getOverviewStats() {
+            showLoading('statsResponse');
+            try {
+                const response = await fetch(`${API_URL}/api/stats/overview`);
+                const data = await response.json();
+                showResponse('statsResponse', data, data.success);
+            } catch (error) {
+                showResponse('statsResponse', { error: error.message }, false);
+            }
+        }
+
+        async function getStatusStats() {
+            showLoading('statsResponse');
+            try {
+                const response = await fetch(`${API_URL}/api/stats/by-status`);
+                const data = await response.json();
+                showResponse('statsResponse', data, data.success);
+            } catch (error) {
+                showResponse('statsResponse', { error: error.message }, false);
+            }
+        }
+
+        async function getProductStats() {
+            showLoading('statsResponse');
+            try {
+                const response = await fetch(`${API_URL}/api/stats/by-product`);
+                const data = await response.json();
+                showResponse('statsResponse', data, data.success);
+            } catch (error) {
+                showResponse('statsResponse', { error: error.message }, false);
+            }
+        }
+    </script>
+</body>
+</html>

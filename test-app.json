@@ -1,0 +1,12 @@
+{
+  "APP_REF": "APP-TEST001",
+  "APP_STATUS": "PENDING",
+  "CIS_CUSTOMER_NUMBER": "CISTEST001",
+  "CUST_FIRST_NAME": "Test",
+  "CUST_LAST_NAME": "User",
+  "CUST_EMAIL": "test@example.com",
+  "REQ_PRODUCT_CODE": "TL01",
+  "REQ_PRODUCT_NAME": "Term Loan",
+  "REQ_AMOUNT": 100000,
+  "REQ_CCY": "ZAR"
+}
